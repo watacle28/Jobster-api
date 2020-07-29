@@ -9,7 +9,13 @@ const {
     validationResult
 } = require('express-validator');
 //multer configs import
-const uploader = require('../utils/upload')
+const uploader = require('../utils/upload');
+const {
+    transport,
+    emailTemplate
+} = require('../utils/nodemailer');
+const Job = require('../models/Job');
+const Company = require('../models/Company');
 
 
 
@@ -89,7 +95,9 @@ router.put('/me', uploader.single('resume'), async (req, res) => {
         const stackArray = stack.trim().split(',').map(tool => tool.trim())
         user.stack = stackArray
     }
-
+    if (user.fullname && user.bio && user.role && user.location && user.github && user.website && user.resume && user.stack.length > 0) {
+        user.profileComplete = true
+    }
 
     await user.save()
     console.log({
@@ -115,8 +123,43 @@ router.delete('dev/me', async (req, res) => {
 })
 
 router.post('dev/apply/:jobId', async (req, res) => {
-    //todo
+    //check if profile is complete
+    const dev = await Dev.findById(req.user.user)
+
+    if (dev.profileComplete) {
+        const job = await Job.findById(req.params.jobId)
+        //company 
+        const company = await Company.findById(job.companyId)
+
+        //send application mail to company
+        const message = {
+            from: 'sirwatacle@gmail.com',
+            to: `${company.email}`,
+            subject: `${dev.fullname} - ${job.role}`,
+            html: `${emailTemplate(dev)}`,
+            attachments: [{
+                filename: `resume for ${dev.fullname}`,
+                path: `${dev.resume}`
+            }]
+        }
+        transport.sendMail(message, async (err, info) => {
+            if (err) {
+                return res.status(500).json({
+                    error: 'something went wrong'
+                })
+            }
+            console.log({
+                info
+            });
+            job.applications++;
+            await job.save()
+            return res.json({
+                msg: 'application successfull'
+            })
+        })
+    }
 })
+
 
 
 module.exports = router;

@@ -8,6 +8,7 @@ const {
 } = require('express-validator');
 //multer configs import
 const uploader = require('../utils/upload');
+const canCreate_EDIT_DEL = require('../middleware/canEditOrDEL');
 
 //create a job -> pvt
 router.post('/create', [
@@ -76,78 +77,74 @@ router.post('/create', [
     }
 })
 
-//edit a blog
-router.put('/edit/:id', async (req, res) => {
-    //check if user owns the blog
-    const blogsByUser = await Company.findById(req.user.user)
+//edit a job
+router.put('/edit/:id', canCreate_EDIT_DEL(Job), async (req, res) => {
+    const {
+        position,
+        role,
+        level,
+        contract,
+        location,
+        languages,
+        tools
+    } = req.body;
 
-    const isOwner = blogsByUser.posts.filter(blog => blog == req.params.id);
+    try {
 
-    if (isOwner.length < 1) {
-        return res.status(401).json({
-            msg: 'sorry you dont own the blog'
+
+        const jobToEdit = res.doc
+        if (level) jobToEdit.level = level
+        if (contract) jobToEdit.contract = contract
+        if (location) jobToEdit.location = location
+        if (tools) {
+            let toolsArray = tools.trim().split(',').map(tool => tool.trim())
+            jobToEdit.tools = toolsArray
+        }
+        if (position) {
+
+            jobToEdit.position = position
+
+        }
+        if (role) {
+
+            postToEdit.role = role
+
+        }
+        if (req.body.languages) {
+
+            let langArray = languages.trim().split(',').map(lang => lang.trim())
+            postToEdit.languages = langArray
+
+        }
+
+
+        await jobToEdit.save()
+
+        return res.json({
+            editedJob: jobToEdit
+        })
+
+    } catch (error) {
+        return res.status(400).json({
+            error
         })
     }
-    //user owns post so can edit
-
-    // try {
-
-
-    const postToEdit = await Job.findById(req.params.id)
-
-    if (req.body.body) {
-
-        postToEdit.body = req.body.body
-
-    }
-    if (req.body.title) {
-
-        postToEdit.title = req.body.title
-
-    }
-    if (req.body.tags) {
-
-        let tagArray = req.body.tags.trim().split(',').map(tag => tag.trim())
-        postToEdit.tags = tagArray
-
-    }
-
-
-    await postToEdit.save()
-
-    return res.json({
-        editedPost: postToEdit
-    })
-
-    // } catch (error) {
-    //     return res.status(400).json({
-    //         error
-    //     })
-    // }
 })
 //remove post
 router.delete('/post/:id', async (req, res) => {
-    //check if user owns the blog
-    const blogger = await Company.findById(req.user.user)
 
-    const isOwner = blogger.posts.filter(blog => blog == req.params.id);
-
-    if (isOwner.length < 1) {
-        return res.status(401).json({
-            msg: 'sorry you dont own the blog'
-        })
-    }
     try {
-        await Job.findByIdAndDelete(req.params.id)
-        blogger.posts.pull(req.params.id)
-        await blogger.save()
+        await res.doc.remove()
+        const co = await Company.findById(req.user.user)
+        co.jobs.pull(req.params.id)
+        await co.save()
         return res.json({
-            msg: 'post deleted'
+            msg: 'job deleted'
         })
 
     } catch (error) {
         return res.status(404).json({
-            err: 'post not found'
+            err: 'job not found'
         })
     }
 

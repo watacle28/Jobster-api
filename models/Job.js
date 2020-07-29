@@ -18,6 +18,7 @@ const JobSchema = Schema({
     contact: String,
     location: String,
     languages: [String],
+    applications: Number,
     tools: [String],
     verified: {
         type: Boolean,

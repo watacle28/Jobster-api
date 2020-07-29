@@ -13,13 +13,13 @@ const canCreate_EDIT_DEL = (model) => {
             });
         }
 
-        //const resCo = await Company.findById(req.user.user)
 
         //doc owner  
         try {
             if (req.params.id) {
                 const doc = await model.findById(req.params.id)
-                if (doc.companyId !== req.user.user) {
+                console.log(doc);
+                if (doc.companyId != req.user.user) {
                     return res.status(400).json({
                         msg: 'not allowed'
                     })

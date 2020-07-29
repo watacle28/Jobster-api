@@ -113,17 +113,47 @@ router.get('/companies/:id', async (req, res) => {
         })
     } catch (error) {
         return res.status(404).json({
-            error: `blogger not found, ooooopsy ${error}`
+            error: `dev not found, ooooopsy ${error}`
         })
     }
 })
 
-// router.post('/upload', uploader.single('avatar'), async (req, res) => {
-//     console.log({
-//         req: req.file
-//     })
-//     res.json(req.file.url)
-//})
+//get all devs
+router.get('/devs', async (req, res) => {
+
+    try {
+        const devs = await Dev.find().select('-password')
+
+        return res.json({
+            devs
+        })
+    } catch (error) {
+        return res.status(401).json({
+            error
+        })
+    }
+
+})
+
+//get a specific dev
+
+router.get('/devs/:id', async (req, res) => {
+    try {
+        const dev = await Dev.findById({
+            _id: req.params.id
+        }).select('-password')
+
+
+        return res.json({
+            dev
+        })
+    } catch (error) {
+        return res.status(404).json({
+            error: `dev not found, ooooopsy ${error}`
+        })
+    }
+})
+
 
 
 module.exports = router;

@@ -19,6 +19,11 @@ const DevSchema = Schema({
     avatar: String,
     password: String,
     stack: [String],
+    profileComplete: {
+        type: Boolean,
+        default: false
+    },
+    bio: String,
     github: String,
     website: String,
     resetToken: String,
